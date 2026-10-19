@@ -145,3 +145,6 @@
 舟入千里=A Boat Through a Thousand Li
 
 部分细节未载入 · 点击重试=Some details could not load · Retry
+
+上下滑动展卷 · 点击画面可自由细看=Swipe up or down to travel · Tap to explore
+松手后再次上滑，继续展卷=Lift your finger, then swipe up to continue
