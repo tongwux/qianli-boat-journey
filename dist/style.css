@@ -117,3 +117,30 @@ button,#marks button span{border-radius:999px}
  #sound,.transport>.poem-open,#pure{flex:1 1 28%;padding:6px 8px}
  #marks button{max-width:145px}
 }
+
+/* Keep readable labels independent of painting brightness. */
+#marks button,#marks button.near,#marks button:hover,#marks button:focus-visible{opacity:1}
+#marks button span,#poemMark{color:#fff3d6;background:rgba(20,43,35,.92);border:1px solid #cbbb94;text-shadow:none;line-height:1.5}
+#marks button:hover span,#marks button:focus-visible span,#poemMark:hover{background:#142b23}
+#marks button:focus-visible,#poemMark:focus-visible{outline:3px solid #fff3d6;outline-offset:4px}
+#marks button.found span:before{color:#fff3d6}
+#poemMark{border-radius:999px;min-height:44px;padding:10px 16px}
+.intro-poem,.transport>.poem-open{border:1px solid #cbbb94;border-radius:999px;color:#fff3d6;background:#20382f;padding:10px 16px;min-height:44px;text-decoration:none;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+.intro-poem{margin:0 0 12px;width:fit-content;max-width:100%}
+/* Help belongs to the navigation rail, never on the artwork. */
+.ends{align-items:flex-start;color:#cbbb9f;font-size:11px;gap:8px}
+.journey-help{flex:1;min-width:0;text-align:center;line-height:1.5}
+.journey-help #status{display:block;max-width:none;color:#e7d9b9;font-size:11px;line-height:1.5}
+footer #hint,footer #tapHint{position:static;inset:auto;max-width:none;width:auto;background:none;border:0;padding:0;margin:0;font-size:11px;line-height:1.5;letter-spacing:0;color:#e7d9b9;visibility:visible;opacity:1;transition:none}
+footer #hint{display:none}
+.free-view footer #hint{display:block;max-width:none}
+.free-view .journey-help #status{display:none}
+footer #tapHint[hidden],footer #tapHint.dismissed{display:none}
+@media(max-width:650px){
+ .transport>.poem-open{padding:6px 8px}
+ #intro .intro-poem{padding:8px 14px}
+ .ends{font-size:10px;margin-top:5px}
+}
+
+@media(max-width:650px){:root{--mobile-foot:calc(250px + env(safe-area-inset-bottom,0px))}}
+@media(min-width:651px) and (max-width:950px) and (max-height:500px){footer{height:180px}#stage{height:calc(100dvh - 230px)}#intro,#discoveries{bottom:180px}#card{max-height:calc(100dvh - 250px)}}
