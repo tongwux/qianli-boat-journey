@@ -34,7 +34,7 @@
 山回水转 · 移步换景=Around the bend · A new view
 沿水缓行 · 随时停舟=Drift slowly · Pause anywhere
 ，已发现=, discovered
-查看景点：=Explore: 
+查看景点：=Explore:
 收橹缓行，舟过桥影。=Oars at rest, the boat slips beneath the bridge.
 已过长桥 · 回望两岸=Beyond the bridge · Look back
 渐渐收橹，靠向柳岸。=Slowly approaching the willow-lined bank.
@@ -120,7 +120,7 @@
 小舟、分段行舟路线、环境声音与六处发现交互、六处观景提示是本网站的艺术演绎，并非原画动画或历史复原。环境声音默认关闭；卷首题诗可点击阅读简体全文。探索记录仅保存在当前浏览器。山水采用多点透视，水面不相接处以淡出转场；水磨示意与流水声音均为体验演绎。=The moving boat, local water routes, optional sound and twelve stops are an artistic interpretation, not a historical reconstruction. The boat sprite was derived with AI assistance from a painted boat. Sound is off by default; discoveries stay in this browser. Disconnected waterways use fade transitions. The watermill diagram and synthesized water sound are interpretive additions.
 图像：Wikimedia Commons 公有领域标记版本，39,974 × 1,600 像素。原作藏于北京故宫博物院。=Image: the public-domain-marked version on Wikimedia Commons, 39,974 × 1,600 pixels. The original painting is held by the Palace Museum, Beijing.
 查看图像来源与使用说明 ↗=Image source and usage information ↗
-卷首题诗为清代乾隆所题，诗文据=The opening inscription was added by the Qing emperor Qianlong. The Chinese text follows the 
+卷首题诗为清代乾隆所题，诗文据=The opening inscription was added by the Qing emperor Qianlong. The Chinese text follows the
 故宫博物院释文=Palace Museum transcription
 ，与北宋原画创作年代不同。卷尾保留原画中的元代溥光题跋。=, centuries after the Northern Song painting. The end of the scroll retains the Yuan-period colophon by Puguang.
 操作：向下滚动展开画卷，向上滚动回看。景点自动放大并展开批注；继续滚动退出景点。自由细看中，滚轮缩放、鼠标左键按住拖动平移，手机双指缩放。点击继续展卷返回原行程。方向键、空格与全卷导航也可控制行程。=Controls: scroll down to explore and up to retrace. Stops zoom in automatically and reveal notes. In detail mode, left-drag to pan and use the wheel to zoom; on touchscreens, drag with one finger and pinch with two. Resume returns to the journey. Arrow keys, Space and the overview map also navigate the scroll.
@@ -135,8 +135,8 @@
 继续展卷=Continue
 卷首题诗=Inscription
 沿卷发现=Discoveries
-景点 =Stop 
-发现 =Found 
+景点 =Stop
+发现 =Found
 卷尾=End
 卷首=Beginning
 放大=Zoom in
@@ -146,5 +146,10 @@
 
 部分细节未载入 · 点击重试=Some details could not load · Retry
 
-上下滑动展卷 · 点击画面可自由细看=Swipe up or down to travel · Tap to explore
-松手后再次上滑，继续展卷=Lift your finger, then swipe up to continue
+左滑前进 · 右滑回看 · 点击画面可自由细看=Swipe left to advance · Right to return · Tap to explore
+松手后再次左滑，继续展卷=Lift your finger, then swipe left to continue
+
+左滑前进 · 右滑回看=Swipe left to advance · Right to return
+已至卷尾 · 右滑回看=End of the scroll · Swipe right to return
+向左轻滑，徐徐入画 ←=Swipe left to enter the painting ←
+手机左滑前进、右滑回看；电脑=On mobile, swipe left to advance and right to return. On desktop,
