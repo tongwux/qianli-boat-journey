@@ -93,7 +93,11 @@ Deploy the contents of `dist/` to a static host, keeping `en/` and `assets/` in 
 
 The landscape is not repainted. The moving boat is an **AI-assisted extraction/reconstruction based on a boat beside the long bridge**, not a pixel-exact archival cutout. Boat routes, water sound, the watermill schematic and interactive stories are contemporary interpretations, not claims about historical motion or engineering precision. Source links accompany the relevant notes in the experience.
 
-No blanket license is applied to third-party artwork or sources. Refer to their linked usage information. Public availability of this repository does not itself grant a software license.
+## License
+
+Original software and documentation are licensed under the **[MIT License](LICENSE)** — Copyright (c) 2026 Tong Wu. You may use, modify, and distribute the licensed software, including commercially, provided the copyright and permission notices are retained. The software is provided without warranty.
+
+Image assets, screenshots, historical artwork and inscriptions, and third-party material are outside this software license. See **[License scope and artwork notices](ASSET_NOTICE.md)** for their sources and status. This exclusion does not impose restrictions on public-domain material.
 
 ## Validation and current limits
 
