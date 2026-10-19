@@ -28,11 +28,11 @@ const passages=[
  [[11300,1510],[10800,1420],[10300,1400],[9800,1450],[9300,1490],[8700,1460],[8200,1490],[7600,1450],[7100,1350],[6700,1230],[6100,1210],[5500,1160],[4800,1120],[4200,1080],[3700,1000],[3200,900]]
 ];
 let found=new Set();try{found=new Set(JSON.parse(localStorage.getItem('qianli-discoveries-v2')||'[]').filter(id=>stops.some(s=>s.id===id)))}catch{}
-let zoomMotion=null,pinchReachedWide=false;
+let zoomMotion=null,pinchReachedWide=false,tileLoader=null;
 let freeMode=false,savedScroll=0,timeline=[],totalScroll=1,cameraTween=null,scrollDirty=true;
 let pos=.944,scale=1,ox=0,oy=0,playing=false,entered=false,follow=true,last=0,pure=false,sound=false,audio,gain,filter,pointers=new Map(),pinch=0,speed=0,activeStop=null,scene=null,boatOverride=null,fallTimer=null,returnFocus=null;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),smooth=t=>t*t*(3-2*t);
-function base(){return stage.clientHeight/H}
+function base(){return Math.max(1,stage.clientHeight)/H}
 function bound(){ox=clamp(ox,Math.min(0,stage.clientWidth-W*scale),0);oy=clamp(oy,Math.min(0,stage.clientHeight*(activeStop&&stage.clientWidth<=750?.45:1)-H*scale),Math.max(0,stage.clientHeight-H*scale)/2)}
 function center(){ox=stage.clientWidth*.52-pos*W*scale;oy=(stage.clientHeight-H*scale)/2;bound()}
 function route(x){
@@ -40,6 +40,7 @@ function route(x){
  return {x,y:1480,opacity:0,angle:0,depth:1};
 }
 function render(){
+ tileLoader?.update(-ox/scale,(stage.clientWidth-ox)/scale);
  world.style.setProperty('--scene-scale',scale);
  world.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`;
  const b=boatOverride||route(pos*W),boat=$('boat');boat.style.left=b.x+'px';boat.style.top=b.y+'px';boat.style.opacity=(b.opacity??1)*.84;boat.disabled=!entered||(b.opacity??1)<.5;boat.style.transform=`translate(-50%,-94%) rotate(${b.angle||0}deg) scale(${b.depth||1})`;
@@ -113,7 +114,7 @@ function applyTimeline(){
 function moveScroll(y){cameraTween=null;window.scrollTo({top:clamp(y,0,totalScroll),behavior:reduce||Math.abs(y-window.scrollY)>1500?'instant':'smooth'});scrollDirty=true;}
 function advance(){if(freeMode){leaveFree();return}const seg=segmentAt(window.scrollY);moveScroll(seg.stop?timeline.find(t=>t.stop===seg.stop&&t.phase==='out').end+20:window.scrollY+600);}
 function enterFree(){if(!entered||freeMode)return;savedScroll=window.scrollY;freeMode=true;cameraTween=null;closeScene();document.body.classList.add('free-view');$('freeMode').textContent='Continue';$('freeMode').setAttribute('aria-pressed','true');$('hint').textContent=stage.clientWidth<=750?'Drag to pan · Pinch to zoom · Zoom out fully to resume':'Left-drag to pan · Wheel to zoom · Zoom out fully to resume';$('status').textContent='Journey paused · Resume to return to your place';render();}
-function leaveFree(animate=true){if(!freeMode)return;zoomMotion=null;const before={scale,ox,oy,time:performance.now()};freeMode=false;document.body.classList.remove('free-view');$('freeMode').textContent='Explore detail';$('freeMode').setAttribute('aria-pressed','false');$('hint').textContent='Scroll down to explore right to left · Details unfold along the way';window.scrollTo({top:savedScroll,behavior:'instant'});cameraTween=animate?before:null;scrollDirty=true;applyTimeline();}
+function leaveFree(animate=true){if(!freeMode)return;zoomMotion=null;const before={scale,ox,oy,time:performance.now()};freeMode=false;pointers.clear();pinch=null;pinchReachedWide=false;document.body.classList.remove('free-view');$('freeMode').textContent='Explore detail';$('freeMode').setAttribute('aria-pressed','false');$('hint').textContent='Scroll down to explore right to left · Details unfold along the way';window.scrollTo({top:savedScroll,behavior:'instant'});cameraTween=animate?before:null;scrollDirty=true;applyTimeline();}
 // Resume from the area being inspected, skipping a stop already zoomed back out.
 function resumeFromWide(step=120){
  const x=clamp((stage.clientWidth*.52-ox)/(W*scale),.018,.944),previous=segmentAt(savedScroll);
@@ -136,7 +137,20 @@ $('pure').onclick=()=>{pure=!pure;$('app').classList.toggle('pure',pure);$('pure
 $('sound').onclick=async()=>{sound=!sound;try{await enableAudio()}catch{sound=false;$('status').textContent='Sound could not start. Please try again'}$('sound').textContent=sound?'Sound on':'Sound off';$('sound').setAttribute('aria-pressed',sound);updateAudio()};
 $('aboutBtn').onclick=()=>$('about').showModal();$('closeAbout').onclick=()=>$('about').close();
 for(const b of document.querySelectorAll('.poem-open'))b.onclick=()=>$('poemDialog').showModal();$('closePoem').onclick=()=>$('poemDialog').close();
-let ready=0;for(let i=0;i<20;i++){const im=new Image();im.width=Math.min(2000,W-i*2000);im.height=H;im.src=`assets/tile-${String(i).padStart(2,'0')}.jpg`;im.onload=()=>{if(++ready===20){$('loading').hidden=true;$('loading').style.display='none';$('enter').disabled=false;$('enter').textContent='Enter the scroll ←'}};im.onerror=()=>{$('loading').textContent='The painting could not fully load. Please refresh to retry.'};$('tiles').appendChild(im)}
+const tileImages=[];
+for(let i=0;i<20;i++){
+ const im=new Image();im.width=Math.min(2000,W-i*2000);im.height=H;im.alt='';im.decoding='async';
+ $('tiles').appendChild(im);tileImages.push(im);
+}
+tileLoader=QianliImages.createTileLoader({images:tileImages,width:W,
+ margin:navigator.connection?.saveData?0:1,
+ onStatus:({failed})=>{$('imageRetry').hidden=!failed;}
+});
+$('imageRetry').onclick=()=>tileLoader.retry();
+window.addEventListener('online',()=>tileLoader.retry());
+// The overview is a continuous fallback; high-resolution requests never block entry.
+$('loading').hidden=true;$('enter').disabled=false;$('enter').textContent='Enter the scroll ←';
+
 let opening=false,entryWheel=0,entryWheelTime=0,entryTouch=null;
 function beginEntrance(){
  if(entered||opening||$('enter').disabled||document.querySelector('dialog[open]'))return;
@@ -169,12 +183,54 @@ document.addEventListener('keydown',e=>{
 window.addEventListener('scroll',()=>{if(!freeMode){zoomMotion=null;scene=null;boatOverride=null;$('sceneAction').disabled=false;scrollDirty=true}},{passive:true});
 stage.addEventListener('wheel',e=>{if(!freeMode)return;e.preventDefault();const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?stage.clientHeight:1);if(delta>0&&scale<=base()+.0001&&(zoomMotion?.to.scale??scale)<=base()+.0001){resumeFromWide(Math.min(delta,240));return}const r=stage.getBoundingClientRect();zoom(Math.exp(-delta*.001),e.clientX-r.left,e.clientY-r.top)},{passive:false});
 stage.addEventListener('dragstart',e=>e.preventDefault());
-stage.addEventListener('pointerdown',e=>{if(!freeMode||e.target.closest('button')||e.button!==0)return;e.preventDefault();zoomMotion=null;stage.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pinch=0;pinchReachedWide=false});
-stage.addEventListener('pointermove',e=>{if(!freeMode||!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const[a,b]=[...pointers.values()],dist=Math.hypot(a.x-b.x,a.y-b.y),r=stage.getBoundingClientRect();if(pinch){zoom(dist/pinch,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top,true);pinchReachedWide=dist<pinch&&scale<=base()+.0001}pinch=dist}else{ox+=e.clientX-old.x;oy+=e.clientY-old.y;bound();render()}});
-for(const event of ['pointerup','pointercancel'])stage.addEventListener(event,e=>{pointers.delete(e.pointerId);pinch=0;if(!pointers.size){const resume=pinchReachedWide;pinchReachedWide=false;if(resume&&freeMode&&event==='pointerup')resumeFromWide(0)}});
+function pinchState(){
+ if(pointers.size!==2)return null;
+ const[a,b]=[...pointers.values()];return {distance:Math.hypot(a.x-b.x,a.y-b.y),x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+}
+stage.addEventListener('pointerdown',e=>{
+ if(!freeMode||e.target.closest('button')||e.button!==0)return;
+ e.preventDefault();zoomMotion=null;stage.setPointerCapture(e.pointerId);
+ pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pinch=pinchState();pinchReachedWide=false;
+});
+stage.addEventListener('pointermove',e=>{
+ if(!freeMode||!pointers.has(e.pointerId))return;
+ const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pointers.size===2){
+  const next=pinchState(),r=stage.getBoundingClientRect();
+  if(pinch&&pinch.distance>0){
+   zoom(next.distance/pinch.distance,pinch.x-r.left,pinch.y-r.top,true);
+   ox+=next.x-pinch.x;oy+=next.y-pinch.y;bound();render();
+   pinchReachedWide=next.distance<pinch.distance&&scale<=base()+.0001;
+  }
+  pinch=next;
+ }else if(pointers.size===1){ox+=e.clientX-old.x;oy+=e.clientY-old.y;bound();render()}
+});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])stage.addEventListener(event,e=>{
+ if(!pointers.has(e.pointerId))return;
+ pointers.delete(e.pointerId);pinch=pinchState();
+ if(event!=='pointerup')pinchReachedWide=false;
+ if(!pointers.size){const resume=pinchReachedWide;pinchReachedWide=false;if(resume&&freeMode)resumeFromWide(0)}
+});
+
 document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')||!entered||e.target.matches('input,button,a'))return;if(e.key==='Escape'){if(freeMode)leaveFree();else advance();return}if(freeMode){if(e.key==='+'||e.key==='=')zoom(1.25);if(e.key==='-')zoom(.8);return}if(['ArrowDown','ArrowLeft','PageDown',' '].includes(e.key)){e.preventDefault();moveScroll(window.scrollY+(e.key==='PageDown'?600:180))}if(['ArrowUp','ArrowRight','PageUp'].includes(e.key)){e.preventDefault();moveScroll(window.scrollY-(e.key==='PageUp'?600:180))}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(fallTimer);fallTimer=null;scene=null;$('sceneAction').disabled=false}updateAudio()});
-window.addEventListener('resize',()=>{zoomMotion=null;const ratio=window.scrollY/totalScroll;buildTimeline();if(freeMode){savedScroll=ratio*totalScroll;bound();render()}else{window.scrollTo({top:ratio*totalScroll,behavior:'instant'});applyTimeline()}});
+let viewport={width:stage.clientWidth,height:stage.clientHeight};
+function resizeJourney(){
+ const width=stage.clientWidth,height=stage.clientHeight;
+ if(!width||!height||(width===viewport.width&&height===viewport.height))return;
+ const anchor=segmentAt(freeMode?savedScroll:window.scrollY),index=timeline.indexOf(anchor);
+ const fraction=clamp(((freeMode?savedScroll:window.scrollY)-anchor.start)/anchor.length,0,1);
+ const point={x:(viewport.width/2-ox)/scale,y:(viewport.height/2-oy)/scale};
+ const magnification=scale/(Math.max(1,viewport.height)/H);
+ zoomMotion=null;cameraTween=null;pointers.clear();pinch=null;pinchReachedWide=false;
+ viewport={width,height};buildTimeline();
+ const destination=timeline[index].start+timeline[index].length*fraction;
+ if(freeMode){savedScroll=destination;scale=base()*magnification;ox=width/2-point.x*scale;oy=height/2-point.y*scale;bound();render()}
+ else{window.scrollTo({top:destination,behavior:'instant'});applyTimeline()}
+}
+window.addEventListener('resize',resizeJourney);
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(resizeJourney).observe(stage);
+
 function frame(t){let dt=Math.min((t-last)/1000,.05);last=t;
  if(scrollDirty||cameraTween){scrollDirty=false;applyTimeline()}
  if(zoomMotion){const m=zoomMotion,u=clamp((t-m.start)/m.duration,0,1),e=1-Math.pow(1-u,3);scale=m.from.scale+(m.to.scale-m.from.scale)*e;ox=m.from.ox+(m.to.ox-m.from.ox)*e;oy=m.from.oy+(m.to.oy-m.from.oy)*e;if(u===1)zoomMotion=null;render()}
