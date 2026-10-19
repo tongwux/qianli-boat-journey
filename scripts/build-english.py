@@ -25,5 +25,5 @@ for name in ['index.html', 'app.js', 'painting-menu.js', 'boat-egg.js']:
         result = result.replace('</head>', '<link rel="stylesheet" href="en.css"></head>')
     elif re.search(r'[\u4e00-\u9fff]', result):
         raise ValueError(f'Untranslated script text in {name}: ' + '\n'.join(line for line in result.splitlines() if re.search(r'[\u4e00-\u9fff]',line)))
-    (out / name).write_text(result, encoding='utf-8')
+    (out / name).write_text(result, encoding='utf-8', newline='\n')
 print('Generated English HTML and scripts in dist/en/')
