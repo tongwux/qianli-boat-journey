@@ -5,7 +5,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
-function journey(locale=''){
+function journey(locale='', options={}){
+ let now=1000;
  const nodes=new Map(),all=[],listeners={},store=new Map(),frames=[];
  class Element{
   constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.hidden=false;this.disabled=false;this.open=false;this.attributes={};this.events={};this.style={setProperty(){}};this.clientWidth=390;this.clientHeight=561;
@@ -28,7 +29,7 @@ function journey(locale=''){
   querySelectorAll:q=>q==='.poem-open'?[]:q.startsWith('[data-id=')?all.filter(x=>x.dataset.id===q.match(/"([^"]+)"/)[1]):[],
   addEventListener:(t,f)=>(listeners['doc:'+t]??=[]).push(f)};
  const context={document,Image:class extends Element{},console,innerWidth:390,innerHeight:844,scrollY:0,
-  navigator:{connection:{}},history:{},matchMedia:()=>({matches:true}),performance:{now:()=>1000},
+  navigator:{connection:{}},history:{},matchMedia:q=>({matches:q.includes('reduced')?options.reduce!==false:options.touch!==false}),performance:{now:()=>now},
   localStorage:{getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)},
   setTimeout:f=>{f();return 1;},clearTimeout(){},requestAnimationFrame:f=>frames.push(f),Event:class{constructor(type){this.type=type;}},
   addEventListener:(t,f)=>(listeners[t]??=[]).push(f),dispatchEvent:e=>(listeners[e.type]||[]).forEach(f=>f(e)),
@@ -38,7 +39,7 @@ function journey(locale=''){
   const folder=file==='image-loader.js'?'':locale;
   vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist',folder,file),'utf8'),context,{filename:file});
  }
- const tick=()=>{const current=frames.splice(0);current.forEach(f=>f(1000));};
+ const tick=(elapsed=0)=>{now+=elapsed;const current=frames.splice(0);current.forEach(f=>f(now));};
  const run=s=>vm.runInContext(s,context);
  return {get,context,store,run,tick,enter(){get('enter').onclick();tick();},key(key){(listeners['doc:keydown']||[]).forEach(f=>f({key,target:get('stage'),preventDefault(){},stopImmediatePropagation(){}}));}};
 }
@@ -85,4 +86,48 @@ test('boat-origin discovery persists and dialogs close',()=>{
 test('keyboard entry and zoom-menu access remain available',()=>{
  const h=journey();h.key('Enter');assert.equal(h.run('entered'),false);h.key('ArrowDown');h.tick();assert.equal(h.run('entered'),true);
  h.key('Enter');assert.equal(h.get('paintingMenu').hidden,false);
+});
+
+function swipe(h,from,to,end=true){
+ const stage=h.get('stage');
+ stage.dispatch('touchstart',{touches:[{clientX:100,clientY:from}]});
+ stage.dispatch('touchmove',{touches:[{clientX:100,clientY:to}]});
+ if(end)stage.dispatch('touchend',{touches:[]});
+}
+test('touch arrival animates without further swiping and consumes the arrival gesture',()=>{
+ const h=journey('',{reduce:false});h.enter();
+ h.run("scrollTo({top:timeline.find(t=>t.phase==='in').start-20})");h.tick();
+ const wide=h.run('scale');swipe(h,400,300,false);
+ assert.equal(h.run('segmentAt(scrollY).phase'),'hold');assert.equal(h.run('scale'),wide);
+ const paused=h.context.scrollY;
+ h.get('stage').dispatch('touchmove',{touches:[{clientX:100,clientY:100}]});assert.equal(h.context.scrollY,paused);
+ h.get('stage').dispatch('touchend',{touches:[]});
+ swipe(h,400,250);assert.equal(h.context.scrollY,paused); // Touch during arrival cannot skip the stop.
+ h.tick(800);assert.ok(h.run('scale')>wide);assert.equal(h.run('cameraTween'),null);
+ swipe(h,400,320);assert.equal(h.run('segmentAt(scrollY).phase'),'travel');h.tick(800);
+ assert.ok(Math.abs(h.run('scale/base()')-1)<1e-9);
+});
+test('reverse touch travel visits the previous stop, with one pause per gesture',()=>{
+ const h=journey();h.enter();h.get('next').onclick();h.tick();swipe(h,400,300);
+ assert.equal(h.run('segmentAt(scrollY).phase'),'travel');swipe(h,300,400);
+ assert.equal(h.run('segmentAt(scrollY).phase'),'hold');swipe(h,300,400);
+ assert.equal(h.run('segmentAt(scrollY).phase'),'travel');assert.ok(h.run('scrollY<timeline[1].start'));
+});
+test('horizontal, canceled and multi-touch journey gestures do not advance',()=>{
+ const h=journey();h.enter();const stage=h.get('stage');
+ stage.dispatch('touchstart',{touches:[{clientX:200,clientY:300}]});
+ stage.dispatch('touchmove',{touches:[{clientX:100,clientY:290}]});assert.equal(h.context.scrollY,0);
+ stage.dispatch('touchcancel',{touches:[]});assert.equal(h.run('journeyTouch'),null);
+ stage.dispatch('touchstart',{touches:[{clientX:200,clientY:300}]});
+ stage.dispatch('touchmove',{touches:[{clientX:200,clientY:200},{clientX:300,clientY:200}]});assert.equal(h.run('journeyTouch'),null);
+});
+test('pure touch travel skips scenic zoom; free exploration leaves journey scroll alone',()=>{
+ const h=journey();h.enter();h.get('pure').onclick();swipe(h,800,0);
+ assert.equal(h.run('segmentAt(scrollY).phase'),'travel');assert.equal(h.get('card').hidden,true);
+ h.get('freeMode').onclick();const saved=h.context.scrollY;swipe(h,400,200);assert.equal(h.context.scrollY,saved);
+});
+test('desktop scroll still controls the scenic zoom continuously',()=>{
+ const h=journey('',{touch:false});h.enter();
+ h.run("const entrance=timeline.find(t=>t.phase==='in');scrollTo({top:entrance.start+entrance.length/2})");h.tick();
+ assert.equal(h.run('segmentAt(scrollY).phase'),'in');assert.ok(h.run('scale/base()>1 && scale/base()<1.85'));
 });
