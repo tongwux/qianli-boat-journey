@@ -138,3 +138,17 @@ test('touch opening uses a left swipe, not a vertical swipe',()=>{
  intro.dispatch('touchmove',{touches:[{clientX:300,clientY:200}]});assert.equal(h.run('entered'),false);
  intro.dispatch('touchmove',{touches:[{clientX:200,clientY:300}]});assert.equal(h.run('entered'),true);
 });
+
+test('ferry route and animation leave the original boats clear, with no entry jump',()=>{
+ const h=journey('',{reduce:false});h.enter();h.run("openStop(stops.find(s=>s.id==='ferry'))");h.tick();
+ const start=h.run('route(pos*W)');h.get('sceneAction').onclick();
+ assert.equal(h.run('boatOverride.x'),start.x);assert.equal(h.run('boatOverride.y'),start.y);assert.equal(h.run('boatOverride.depth'),start.depth);
+ // Conservative boxes around the original moored boat and the boat to the right.
+ const protectedBoxes=[[20500,1240,20830,1390],[21720,1400,21930,1475]];
+ const clear=p=>{const halfWidth=77*p.depth,top=p.y-80*p.depth;for(const [l,t,r,b] of protectedBoxes)assert.ok(p.x+halfWidth<l||p.x-halfWidth>r||p.y<t||top>b);};
+ for(let x=20500;x<=22250;x+=10)clear(h.run(`route(${x})`));
+ for(let i=0;i<140;i++){h.tick(50);clear(h.run('boatOverride'));}
+});
+test('hull stays level throughout all visible travel segments',()=>{
+ const h=journey();for(let x=3200;x<=37900;x+=25){const p=h.run(`route(${x})`);if(p.opacity>0)assert.equal(p.angle,0);}
+});
