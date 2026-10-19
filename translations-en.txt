@@ -101,13 +101,13 @@
 不必赶路。=There is no hurry.
 沿一江碧水，慢慢走进画中。=Follow the water into the painting.
 正在备舟…=Preparing your boat…
-读卷首题诗 ↗=Read the inscription ↗
+读卷首题诗=Read the inscription
 向下滚动，徐徐入画 ↓=Scroll down to enter ↓
 江山无尽　此刻可游=An endless landscape, a moment to wander
 北宋 · 王希孟 · 千里江山图=Wang Ximeng · Northern Song · 1113
-关于此卷 ↗=About ↗
-卷首题诗 ↗=Inscription ↗
-观画依据 ↗=Source notes ↗
+关于此卷=About
+卷首题诗=Inscription
+观画依据=Source notes
 上一处景点=Previous stop
 下一处景点=Next stop
 千里江山图全卷导航=Full-scroll journey map
@@ -119,7 +119,7 @@
 以王希孟《千里江山图》的全卷数字图像为底，从右向左展开山水。原图保留装裱、题跋与印章，未重绘山川。=Explore the complete digital image of Wang Ximeng’s A Thousand Li of Rivers and Mountains from right to left. The image retains the mounting, inscriptions and seals. The landscape itself has not been repainted.
 小舟、分段行舟路线、环境声音与六处发现交互、六处观景提示是本网站的艺术演绎，并非原画动画或历史复原。环境声音默认关闭；卷首题诗可点击阅读简体全文。探索记录仅保存在当前浏览器。山水采用多点透视，水面不相接处以淡出转场；水磨示意与流水声音均为体验演绎。=The moving boat, local water routes, optional sound and twelve stops are an artistic interpretation, not a historical reconstruction. The boat sprite was derived with AI assistance from a painted boat. Sound is off by default; discoveries stay in this browser. Disconnected waterways use fade transitions. The watermill diagram and synthesized water sound are interpretive additions.
 图像：Wikimedia Commons 公有领域标记版本，39,974 × 1,600 像素。原作藏于北京故宫博物院。=Image: the public-domain-marked version on Wikimedia Commons, 39,974 × 1,600 pixels. The original painting is held by the Palace Museum, Beijing.
-查看图像来源与使用说明 ↗=Image source and usage information ↗
+查看图像来源与使用说明=Image source and usage information
 卷首题诗为清代乾隆所题，诗文据=The opening inscription was added by the Qing emperor Qianlong. The Chinese text follows the
 故宫博物院释文=Palace Museum transcription
 ，与北宋原画创作年代不同。卷尾保留原画中的元代溥光题跋。=, centuries after the Northern Song painting. The end of the scroll retains the Yuan-period colophon by Puguang.
