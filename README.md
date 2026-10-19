@@ -28,7 +28,7 @@ This is a static HTML, CSS and vanilla JavaScript application. There is no frame
 
 | Choice | How it supports the experience | Trade-off |
 | --- | --- | --- |
-| Original image split into 20 horizontal JPEG tiles | Preserves the source image while allowing the browser to lay out manageable image elements; the painting, boat and hotspots share one coordinate space. | All tiles currently load up front. This is not a lazy-loaded, multi-resolution image viewer. |
+| Camera-aware loading of 20 JPEG tiles | A small overview stays visible while current-view tiles and nearby detail load, with two requests at a time. Failed details can be retried without blocking entry. | This is not a multi-resolution pyramid. Offscreen ready images are evicted toward a six-tile resident budget; visible/prefetched tiles are retained even if that budget is exceeded. Browser caches and decoded-memory reclamation are browser-managed. |
 | Native document scrolling mapped to a camera timeline | A familiar gesture drives travel, zoom-in, pause and zoom-out phases. Backward scrolling naturally revisits the scene. | Distance is choreographed rather than a literal one-to-one horizontal scrollbar. |
 | CSS transforms and `requestAnimationFrame` | A single transformed world keeps image details and interactions aligned. Camera easing can be interrupted by direct manipulation. | Smoothness still depends on image decoding, device memory and browser performance; no frame-rate guarantee is claimed. |
 | Pointer Events plus touch handling | Mouse dragging and two-finger zoom share the camera model. A movement threshold distinguishes a tap from a drag. | Actual touch hardware still needs cross-browser testing; viewport simulation alone is insufficient. |
@@ -54,6 +54,7 @@ After editing Chinese source strings or interaction code:
 
 ```sh
 python scripts/build-english.py
+node --test tests/image-loader.test.cjs tests/journey.test.cjs
 node --check dist/app.js
 node --check dist/en/app.js
 node --check dist/en/painting-menu.js
@@ -68,6 +69,7 @@ Python and Node are development tools here; neither is required by the deployed 
 dist/
   index.html           Chinese entry point and semantic interface
   app.js               Scroll timeline, camera, boat routes and scenes
+  image-loader.js      Viewport-prioritized loading, retries and image eviction
   painting-menu.js      Tap-versus-drag handling and local zoom menu
   boat-egg.js           Hidden boat discovery
   style.css            Shared layout and motion
@@ -77,6 +79,7 @@ dist/
 scripts/
   build-english.py      Reproducible English generation
 translations-en.txt    English text catalog
+tests/                 Dependency-free Node regression tests
 docs/
   english-preview.jpg  Actual browser screenshot
 ```
@@ -103,6 +106,8 @@ Image assets, screenshots, historical artwork and inscriptions, and third-party 
 
 - Browser checks cover entry, scrolling, annotations, free exploration, zoom-menu placement, inscription dialogs and the hidden boat discovery.
 - Responsive checks include small portrait, standard portrait and short landscape viewports. Real-device multi-touch testing remains a follow-up; it is not claimed as completed.
-- The 20 painting tiles total roughly 19 MB on disk. Loading all tiles before entry can be slow on mobile connections. A future improvement would be progressive nearby-tile loading and a multi-resolution pyramid.
+- Entry no longer waits for all 20 tiles. At the checked 390 × 844 portrait viewport, the initial camera requested tiles 17–19; a low-resolution overview remains behind the detail images. Larger viewports may request more tiles. This is a request-scope check, not a measured mobile-network load-time benchmark.
+- Fifteen dependency-free Node tests cover image request ordering/concurrency, retry, eviction, bilingual entry, navigation/annotations, tap-versus-drag, two-pointer state handling, zoom-to-scroll, resize preservation, keyboard access, and discovery persistence. Interaction tests execute the real scripts against a small DOM adapter; they do not emulate browser rendering or native touch behavior.
+- Browser QA covered 390 × 844 Chinese portrait, 320 × 568 English portrait, and 844 × 390 landscape. Transport buttons in portrait have 44 px targets, annotations fit above the footer, and no horizontal page overflow was observed. Physical-device pinch/scroll testing remains outstanding.
 - The persistent animation loop and full-resolution decoded images can be demanding on low-memory devices. No performance benchmark is implied by the simple stack.
 - No analytics, account system or server-side progress storage is included in the application code.

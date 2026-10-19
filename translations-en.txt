@@ -143,3 +143,5 @@
 缩小=Zoom out
 关闭=Close
 舟入千里=A Boat Through a Thousand Li
+
+部分细节未载入 · 点击重试=Some details could not load · Retry
