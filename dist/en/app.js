@@ -47,7 +47,7 @@ function render(){
  world.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`;
  const b=boatOverride||route(pos*W),boat=$('boat');boat.style.left=b.x+'px';boat.style.top=b.y+'px';boat.style.opacity=(b.opacity??1)*.84;boat.disabled=!entered||(b.opacity??1)<.5;boat.style.transform=`translate(-50%,-94%) rotate(${b.angle||0}deg) scale(${b.depth||1})`;
  $('bridgeMask').hidden=activeStop?.id!=='bridge';$('poemMark').style.transform=`translate(-50%,-50%) scale(${1/scale})`;
- const left=clamp(-ox/(W*scale),0,1),wid=Math.min(1,stage.clientWidth/(W*scale));$('viewbox').style.left=left*100+'%';$('viewbox').style.width=wid*100+'%';$('progress').value=window.scrollY/totalScroll*1000;$('counter').textContent=`Found ${found.size} / ${stops.length}`;
+ const left=clamp(-ox/(W*scale),0,1),wid=Math.min(1,stage.clientWidth/(W*scale));$('viewbox').style.left=left*100+'%';$('viewbox').style.width=wid*100+'%';$('progress').value=window.scrollY/totalScroll*1000;$('counter').textContent=`Found${found.size} / ${stops.length}`;
  let s=stops.reduce((a,b)=>Math.abs(a.x-pos)<Math.abs(b.x-pos)?a:b);$('chapter').textContent=pos<.05?'Journey end · Rest awhile':pos>.86?'Beginning · First shore':s.t;
  for(const el of $('marks').children){const s=stops.find(s=>s.id===el.dataset.id);el.style.setProperty('--mark-scale',1/scale);el.classList.toggle('near',Math.abs(s.x-pos)*W*scale<stage.clientWidth*.6);}
  if(entered&&playing&&!boatOverride)$('status').textContent=b.opacity<.1?'Around the bend · A new view':'Drift slowly · Pause anywhere';
@@ -72,7 +72,7 @@ function focusAt(x,y,z=1.7){const current={scale,ox,oy};scale=base()*z;ox=stage.
 function showAnnotation(s){
  if(activeStop?.id===s?.id)return;
  closeScene();if(!s||pure)return;activeStop=s;
- $('cardNum').textContent=`Stop ${String(ordered.indexOf(s)+1).padStart(2,'0')} / ${stops.length}`;
+ $('cardNum').textContent=`Stop${String(ordered.indexOf(s)+1).padStart(2,'0')} / ${stops.length}`;
  $('cardTitle').textContent=s.t;$('cardText').textContent=s.d;$('sceneAction').textContent=s.action;$('sceneAction').disabled=false;$('actionState').textContent='';$('sceneSource').href=s.source;$('card').hidden=false;markFound(s);
 }
 function openStop(s){if(freeMode)leaveFree(false);$('discoveries').hidden=true;$('discoverToggle').setAttribute('aria-expanded','false');const seg=timeline.find(t=>t.stop===s&&t.phase==='hold');moveScroll(seg.start+seg.length*.3);}
@@ -111,8 +111,8 @@ function applyTimeline(){
  const targetY=stage.clientHeight*(.5+((mobile?.25:.52)-.5)*amount)-(.5+(mix('y')-.5)*(pure?0:1))*H*targetScale;
  scale=targetScale;ox=targetX;oy=targetY;bound();
  if(cameraTween){const q=clamp((performance.now()-cameraTween.time)/(cameraTween.duration||650),0,1),e=reduce?1:smooth(q);scale=cameraTween.scale+(scale-cameraTween.scale)*e;ox=cameraTween.ox+(ox-cameraTween.ox)*e;oy=cameraTween.oy+(oy-cameraTween.oy)*e;if(q>=1||reduce)cameraTween=null;}
- if(touchJourney)$('hint').textContent='Swipe up or down to travel · Tap to explore';
- $('status').textContent=touchJourney&&activeStop?'Lift your finger, then swipe up to continue':y>=totalScroll-2?'End of the scroll · Scroll up to return':activeStop?'Scroll down to leave this detail and continue':'Scroll down to explore · Up to retrace';render();
+ if(touchJourney)$('hint').textContent='Swipe left to advance · Right to return · Tap to explore';
+ $('status').textContent=touchJourney?(activeStop?'Lift your finger, then swipe left to continue':y>=totalScroll-2?'End of the scroll · Swipe right to return':'Swipe left to advance · Right to return'):y>=totalScroll-2?'End of the scroll · Scroll up to return':activeStop?'Scroll down to leave this detail and continue':'Scroll down to explore · Up to retrace';render();
 }
 function moveScroll(y){cameraTween=null;window.scrollTo({top:clamp(y,0,totalScroll),behavior:reduce||Math.abs(y-window.scrollY)>1500?'instant':'smooth'});scrollDirty=true;}
 function advance(){if(touchJourney&&entered&&!freeMode){touchAdvance(1);return}if(freeMode){leaveFree();return}const seg=segmentAt(window.scrollY);moveScroll(seg.stop?timeline.find(t=>t.stop===seg.stop&&t.phase==='out').end+20:window.scrollY+600);}
@@ -129,7 +129,7 @@ function resumeFromWide(step=120){
  $('hint').textContent='Back to the panorama · Keep scrolling';
 }
 $('freeMode').onclick=()=>freeMode?leaveFree():enterFree();
-ordered.forEach(s=>{const b=document.createElement('button');b.dataset.id=s.id;b.className=found.has(s.id)?'found':'';b.innerHTML='<span>'+s.t.split(' · ')[0]+'</span>';b.style.left=s.x*W+'px';b.style.top=s.y*H+'px';b.setAttribute('aria-label','Explore: '+s.t);b.onclick=()=>openStop(s);$('marks').appendChild(b);const n=document.createElement('button');n.dataset.id=s.id;n.textContent=s.t;n.className=b.className;n.onclick=()=>openStop(s);$('discoveries').appendChild(n)});
+ordered.forEach(s=>{const b=document.createElement('button');b.dataset.id=s.id;b.className=found.has(s.id)?'found':'';b.innerHTML='<span>'+s.t.split(' · ')[0]+'</span>';b.style.left=s.x*W+'px';b.style.top=s.y*H+'px';b.setAttribute('aria-label','Explore:'+s.t);b.onclick=()=>openStop(s);$('marks').appendChild(b);const n=document.createElement('button');n.dataset.id=s.id;n.textContent=s.t;n.className=b.className;n.onclick=()=>openStop(s);$('discoveries').appendChild(n)});
 $('discoverToggle').onclick=()=>{const shown=$('discoveries').hidden;$('discoveries').hidden=!shown;$('discoverToggle').setAttribute('aria-expanded',shown)};
 $('resumeJourney').onclick=advance;$('closeCard').onclick=advance;$('play').onclick=advance;
 $('prev').onclick=()=>{if(freeMode)leaveFree(false);const points=timeline.filter(t=>t.phase==='hold');const target=points.filter(t=>t.start<window.scrollY-700).at(-1);moveScroll(target?target.start+200:0)};
@@ -154,6 +154,7 @@ window.addEventListener('online',()=>tileLoader.retry());
 // The overview is a continuous fallback; high-resolution requests never block entry.
 $('loading').hidden=true;$('enter').disabled=false;$('enter').textContent='Enter the scroll ←';
 
+if(touchJourney)$('entryHint').textContent='Swipe left to enter the painting ←';
 let opening=false,entryWheel=0,entryWheelTime=0,entryTouch=null;
 function beginEntrance(){
  if(entered||opening||$('enter').disabled||document.querySelector('dialog[open]'))return;
@@ -176,7 +177,7 @@ $('intro').addEventListener('touchstart',e=>{entryTouch=e.touches.length===1?{x:
 $('intro').addEventListener('touchmove',e=>{
  if(entered||!entryTouch||e.touches.length!==1)return;e.preventDefault();
  const dy=entryTouch.y-e.touches[0].clientY,dx=entryTouch.x-e.touches[0].clientX;
- if(dy>32&&dy>Math.abs(dx)){entryTouch=null;beginEntrance()}
+ if(dx>32&&dx>Math.abs(dy)){entryTouch=null;beginEntrance()}
 },{passive:false});
 for(const type of ['touchend','touchcancel'])$('intro').addEventListener(type,()=>{entryTouch=null},{passive:true});
 document.addEventListener('keydown',e=>{
@@ -212,21 +213,21 @@ function touchTravel(delta){
 }
 stage.addEventListener('touchstart',e=>{
  if(!entered||freeMode||document.querySelector('dialog[open]')||e.target.closest('button,a,input')||e.touches.length!==1){journeyTouch=null;return;}
- const p=e.touches[0];journeyTouch={x:p.clientX,y:p.clientY,lastY:p.clientY,axis:null,consumed:!!cameraTween};
+ const p=e.touches[0];journeyTouch={x:p.clientX,y:p.clientY,lastX:p.clientX,axis:null,consumed:!!cameraTween};
 },{passive:true});
 stage.addEventListener('touchmove',e=>{
  if(!journeyTouch||freeMode)return;
  if(e.touches.length!==1){journeyTouch=null;return;}
- e.preventDefault();const g=journeyTouch,p=e.touches[0],dx=p.clientX-g.x,dy=g.y-p.clientY;
+ e.preventDefault();const g=journeyTouch,p=e.touches[0],dx=g.x-p.clientX,dy=g.y-p.clientY;
  if(g.consumed)return;
  if(!g.axis){if(Math.hypot(dx,dy)<12)return;g.axis=Math.abs(dy)>=Math.abs(dx)?'y':'x';}
- if(g.axis==='x'){$('hint').textContent='Swipe up or down to travel · Tap to explore';return;}
- if(segmentAt(window.scrollY).stop){if(Math.abs(dy)<24)return;g.consumed=true;touchAdvance(Math.sign(dy));return;}
- const delta=g.lastY-p.clientY;g.lastY=p.clientY;
+ if(g.axis==='y'){$('hint').textContent='Swipe left to advance · Right to return · Tap to explore';return;}
+ if(segmentAt(window.scrollY).stop){if(Math.abs(dx)<24)return;g.consumed=true;touchAdvance(Math.sign(dx));return;}
+ const delta=g.lastX-p.clientX;g.lastX=p.clientX;
  g.consumed=touchTravel(delta);
 },{passive:false});
 for(const type of ['touchend','touchcancel'])stage.addEventListener(type,()=>{journeyTouch=null;},{passive:true});
-window.addEventListener('qianli-enter',()=>{if(touchJourney)$('hint').textContent='Swipe up or down to travel · Tap to explore';});
+window.addEventListener('qianli-enter',()=>{if(touchJourney)$('hint').textContent='Swipe left to advance · Right to return · Tap to explore';});
 
 stage.addEventListener('dragstart',e=>e.preventDefault());
 function pinchState(){
