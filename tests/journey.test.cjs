@@ -90,8 +90,8 @@ test('keyboard entry and zoom-menu access remain available',()=>{
 
 function swipe(h,from,to,end=true){
  const stage=h.get('stage');
- stage.dispatch('touchstart',{touches:[{clientX:100,clientY:from}]});
- stage.dispatch('touchmove',{touches:[{clientX:100,clientY:to}]});
+ stage.dispatch('touchstart',{touches:[{clientX:from,clientY:200}]});
+ stage.dispatch('touchmove',{touches:[{clientX:to,clientY:200}]});
  if(end)stage.dispatch('touchend',{touches:[]});
 }
 test('touch arrival animates without further swiping and consumes the arrival gesture',()=>{
@@ -113,10 +113,10 @@ test('reverse touch travel visits the previous stop, with one pause per gesture'
  assert.equal(h.run('segmentAt(scrollY).phase'),'hold');swipe(h,300,400);
  assert.equal(h.run('segmentAt(scrollY).phase'),'travel');assert.ok(h.run('scrollY<timeline[1].start'));
 });
-test('horizontal, canceled and multi-touch journey gestures do not advance',()=>{
+test('vertical, canceled and multi-touch journey gestures do not advance',()=>{
  const h=journey();h.enter();const stage=h.get('stage');
  stage.dispatch('touchstart',{touches:[{clientX:200,clientY:300}]});
- stage.dispatch('touchmove',{touches:[{clientX:100,clientY:290}]});assert.equal(h.context.scrollY,0);
+ stage.dispatch('touchmove',{touches:[{clientX:190,clientY:200}]});assert.equal(h.context.scrollY,0);
  stage.dispatch('touchcancel',{touches:[]});assert.equal(h.run('journeyTouch'),null);
  stage.dispatch('touchstart',{touches:[{clientX:200,clientY:300}]});
  stage.dispatch('touchmove',{touches:[{clientX:200,clientY:200},{clientX:300,clientY:200}]});assert.equal(h.run('journeyTouch'),null);
@@ -130,4 +130,11 @@ test('desktop scroll still controls the scenic zoom continuously',()=>{
  const h=journey('',{touch:false});h.enter();
  h.run("const entrance=timeline.find(t=>t.phase==='in');scrollTo({top:entrance.start+entrance.length/2})");h.tick();
  assert.equal(h.run('segmentAt(scrollY).phase'),'in');assert.ok(h.run('scale/base()>1 && scale/base()<1.85'));
+});
+
+test('touch opening uses a left swipe, not a vertical swipe',()=>{
+ const h=journey();const intro=h.get('intro');
+ intro.dispatch('touchstart',{touches:[{clientX:300,clientY:300}]});
+ intro.dispatch('touchmove',{touches:[{clientX:300,clientY:200}]});assert.equal(h.run('entered'),false);
+ intro.dispatch('touchmove',{touches:[{clientX:200,clientY:300}]});assert.equal(h.run('entered'),true);
 });
