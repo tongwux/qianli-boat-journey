@@ -111,8 +111,8 @@ function applyTimeline(){
  const targetY=stage.clientHeight*(.5+((mobile?.25:.52)-.5)*amount)-(.5+(mix('y')-.5)*(pure?0:1))*H*targetScale;
  scale=targetScale;ox=targetX;oy=targetY;bound();
  if(cameraTween){const q=clamp((performance.now()-cameraTween.time)/(cameraTween.duration||650),0,1),e=reduce?1:smooth(q);scale=cameraTween.scale+(scale-cameraTween.scale)*e;ox=cameraTween.ox+(ox-cameraTween.ox)*e;oy=cameraTween.oy+(oy-cameraTween.oy)*e;if(q>=1||reduce)cameraTween=null;}
- if(touchJourney)$('hint').textContent='上下滑动展卷 · 点击画面可自由细看';
- $('status').textContent=touchJourney&&activeStop?'松手后再次上滑，继续展卷':y>=totalScroll-2?'已至卷尾 · 向上滚动可回看':activeStop?'继续向下滚动，收起批注并前行':'向下滚动展卷 · 向上滚动回看';render();
+ if(touchJourney)$('hint').textContent='左滑前进 · 右滑回看 · 点击画面可自由细看';
+ $('status').textContent=touchJourney?(activeStop?'松手后再次左滑，继续展卷':y>=totalScroll-2?'已至卷尾 · 右滑回看':'左滑前进 · 右滑回看'):y>=totalScroll-2?'已至卷尾 · 向上滚动可回看':activeStop?'继续向下滚动，收起批注并前行':'向下滚动展卷 · 向上滚动回看';render();
 }
 function moveScroll(y){cameraTween=null;window.scrollTo({top:clamp(y,0,totalScroll),behavior:reduce||Math.abs(y-window.scrollY)>1500?'instant':'smooth'});scrollDirty=true;}
 function advance(){if(touchJourney&&entered&&!freeMode){touchAdvance(1);return}if(freeMode){leaveFree();return}const seg=segmentAt(window.scrollY);moveScroll(seg.stop?timeline.find(t=>t.stop===seg.stop&&t.phase==='out').end+20:window.scrollY+600);}
@@ -154,6 +154,7 @@ window.addEventListener('online',()=>tileLoader.retry());
 // The overview is a continuous fallback; high-resolution requests never block entry.
 $('loading').hidden=true;$('enter').disabled=false;$('enter').textContent='展开画卷 ←';
 
+if(touchJourney)$('entryHint').textContent='向左轻滑，徐徐入画 ←';
 let opening=false,entryWheel=0,entryWheelTime=0,entryTouch=null;
 function beginEntrance(){
  if(entered||opening||$('enter').disabled||document.querySelector('dialog[open]'))return;
@@ -176,7 +177,7 @@ $('intro').addEventListener('touchstart',e=>{entryTouch=e.touches.length===1?{x:
 $('intro').addEventListener('touchmove',e=>{
  if(entered||!entryTouch||e.touches.length!==1)return;e.preventDefault();
  const dy=entryTouch.y-e.touches[0].clientY,dx=entryTouch.x-e.touches[0].clientX;
- if(dy>32&&dy>Math.abs(dx)){entryTouch=null;beginEntrance()}
+ if(dx>32&&dx>Math.abs(dy)){entryTouch=null;beginEntrance()}
 },{passive:false});
 for(const type of ['touchend','touchcancel'])$('intro').addEventListener(type,()=>{entryTouch=null},{passive:true});
 document.addEventListener('keydown',e=>{
@@ -212,21 +213,21 @@ function touchTravel(delta){
 }
 stage.addEventListener('touchstart',e=>{
  if(!entered||freeMode||document.querySelector('dialog[open]')||e.target.closest('button,a,input')||e.touches.length!==1){journeyTouch=null;return;}
- const p=e.touches[0];journeyTouch={x:p.clientX,y:p.clientY,lastY:p.clientY,axis:null,consumed:!!cameraTween};
+ const p=e.touches[0];journeyTouch={x:p.clientX,y:p.clientY,lastX:p.clientX,axis:null,consumed:!!cameraTween};
 },{passive:true});
 stage.addEventListener('touchmove',e=>{
  if(!journeyTouch||freeMode)return;
  if(e.touches.length!==1){journeyTouch=null;return;}
- e.preventDefault();const g=journeyTouch,p=e.touches[0],dx=p.clientX-g.x,dy=g.y-p.clientY;
+ e.preventDefault();const g=journeyTouch,p=e.touches[0],dx=g.x-p.clientX,dy=g.y-p.clientY;
  if(g.consumed)return;
  if(!g.axis){if(Math.hypot(dx,dy)<12)return;g.axis=Math.abs(dy)>=Math.abs(dx)?'y':'x';}
- if(g.axis==='x'){$('hint').textContent='上下滑动展卷 · 点击画面可自由细看';return;}
- if(segmentAt(window.scrollY).stop){if(Math.abs(dy)<24)return;g.consumed=true;touchAdvance(Math.sign(dy));return;}
- const delta=g.lastY-p.clientY;g.lastY=p.clientY;
+ if(g.axis==='y'){$('hint').textContent='左滑前进 · 右滑回看 · 点击画面可自由细看';return;}
+ if(segmentAt(window.scrollY).stop){if(Math.abs(dx)<24)return;g.consumed=true;touchAdvance(Math.sign(dx));return;}
+ const delta=g.lastX-p.clientX;g.lastX=p.clientX;
  g.consumed=touchTravel(delta);
 },{passive:false});
 for(const type of ['touchend','touchcancel'])stage.addEventListener(type,()=>{journeyTouch=null;},{passive:true});
-window.addEventListener('qianli-enter',()=>{if(touchJourney)$('hint').textContent='上下滑动展卷 · 点击画面可自由细看';});
+window.addEventListener('qianli-enter',()=>{if(touchJourney)$('hint').textContent='左滑前进 · 右滑回看 · 点击画面可自由细看';});
 
 stage.addEventListener('dragstart',e=>e.preventDefault());
 function pinchState(){
