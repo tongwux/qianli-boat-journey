@@ -1,5 +1,7 @@
 # A Boat Through a Thousand Li
 
+**English** · [简体中文](README.zh-CN.md)
+
 An interactive journey through Wang Ximeng’s *A Thousand Li of Rivers and Mountains*: one original landscape, one small boat, and room to look slowly.
 
 **[Live English demo](https://qianli-boat-journey.rainatwu.chatgpt.site/en/)** · **[中文版 / Chinese demo](https://qianli-boat-journey.rainatwu.chatgpt.site/)**
