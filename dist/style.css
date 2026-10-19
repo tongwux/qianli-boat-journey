@@ -60,3 +60,28 @@ html{scrollbar-gutter:stable}body{overflow-x:hidden}body.before-entry,body.free-
 .before-entry #marks,.before-entry #poemMark,.before-entry #hint{visibility:hidden}
 
 .header-actions{display:flex;align-items:center;gap:18px}.language{font-size:12px;border-bottom:1px solid #b8a17066;padding:8px 2px;letter-spacing:0}@media(max-width:650px){.header-actions{gap:8px;font-size:11px}.language{font-size:11px;min-height:36px;display:flex;align-items:center}}
+
+/* A lightweight continuous preview remains underneath progressively loaded details. */
+#tiles{background:url('assets/overview.jpg') center/100% 100% no-repeat}
+#tiles img{opacity:0;transition:opacity .35s ease;pointer-events:none}
+#tiles img.ready{opacity:1}
+#loading[hidden],#imageRetry[hidden]{display:none}
+#imageRetry{position:absolute;z-index:8;top:8px;left:50%;transform:translateX(-50%);max-width:90%;min-height:44px;padding:10px 14px;background:#172b29ed;border:1px solid #c3ad77;font-size:12px}
+#card,#discoveries,dialog{overscroll-behavior:contain;touch-action:pan-y}
+#paintingMenu button{min-height:44px}
+@media(max-width:650px){
+ :root{--mobile-head:calc(65px + env(safe-area-inset-top,0px));--mobile-foot:calc(218px + env(safe-area-inset-bottom,0px))}
+ header{height:var(--mobile-head);padding-top:env(safe-area-inset-top,0px)}
+ footer{height:var(--mobile-foot);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+ #stage{height:calc(100dvh - var(--mobile-head) - var(--mobile-foot))}
+ #intro{top:var(--mobile-head);bottom:var(--mobile-foot);overflow-y:auto}
+ #card{bottom:var(--mobile-foot);max-height:min(40dvh,calc(100dvh - var(--mobile-head) - var(--mobile-foot) - 12px))}
+ #discoveries{bottom:var(--mobile-foot);max-height:calc(100dvh - var(--mobile-head) - var(--mobile-foot) - 12px)}
+ #aboutBtn,.language{min-height:44px}#hint{max-width:calc(100% - 72px)}
+ .free-view #hint{bottom:8px;max-width:calc(100% - 80px)}
+ #card h2{padding-right:32px}.map{height:38px}.ends{line-height:1.3}
+}
+@media(max-width:950px) and (max-height:500px){
+ #card{max-height:calc(100dvh - 210px);overflow:auto}
+ .zoom{flex-direction:row;bottom:8px}.free-view #hint{max-width:calc(100% - 160px)}
+}
