@@ -29,6 +29,8 @@ const passages=[
 ];
 let found=new Set();try{found=new Set(JSON.parse(localStorage.getItem('qianli-discoveries-v2')||'[]').filter(id=>stops.some(s=>s.id===id)))}catch{}
 let zoomMotion=null,pinchReachedWide=false,tileLoader=null;
+let journeyTouch=null;
+const touchJourney=matchMedia("(any-pointer: coarse)").matches;
 let freeMode=false,savedScroll=0,timeline=[],totalScroll=1,cameraTween=null,scrollDirty=true;
 let pos=.944,scale=1,ox=0,oy=0,playing=false,entered=false,follow=true,last=0,pure=false,sound=false,audio,gain,filter,pointers=new Map(),pinch=0,speed=0,activeStop=null,scene=null,boatOverride=null,fallTimer=null,returnFocus=null;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),smooth=t=>t*t*(3-2*t);
@@ -108,11 +110,12 @@ function applyTimeline(){
  const targetScale=base()*z,targetX=stage.clientWidth*(.52+((mobile?.5:.36)-.52)*amount)-pos*W*targetScale;
  const targetY=stage.clientHeight*(.5+((mobile?.25:.52)-.5)*amount)-(.5+(mix('y')-.5)*(pure?0:1))*H*targetScale;
  scale=targetScale;ox=targetX;oy=targetY;bound();
- if(cameraTween){const q=clamp((performance.now()-cameraTween.time)/650,0,1),e=reduce?1:smooth(q);scale=cameraTween.scale+(scale-cameraTween.scale)*e;ox=cameraTween.ox+(ox-cameraTween.ox)*e;oy=cameraTween.oy+(oy-cameraTween.oy)*e;if(q>=1||reduce)cameraTween=null;}
- $('status').textContent=y>=totalScroll-2?'已至卷尾 · 向上滚动可回看':activeStop?'继续向下滚动，收起批注并前行':'向下滚动展卷 · 向上滚动回看';render();
+ if(cameraTween){const q=clamp((performance.now()-cameraTween.time)/(cameraTween.duration||650),0,1),e=reduce?1:smooth(q);scale=cameraTween.scale+(scale-cameraTween.scale)*e;ox=cameraTween.ox+(ox-cameraTween.ox)*e;oy=cameraTween.oy+(oy-cameraTween.oy)*e;if(q>=1||reduce)cameraTween=null;}
+ if(touchJourney)$('hint').textContent='上下滑动展卷 · 点击画面可自由细看';
+ $('status').textContent=touchJourney&&activeStop?'松手后再次上滑，继续展卷':y>=totalScroll-2?'已至卷尾 · 向上滚动可回看':activeStop?'继续向下滚动，收起批注并前行':'向下滚动展卷 · 向上滚动回看';render();
 }
 function moveScroll(y){cameraTween=null;window.scrollTo({top:clamp(y,0,totalScroll),behavior:reduce||Math.abs(y-window.scrollY)>1500?'instant':'smooth'});scrollDirty=true;}
-function advance(){if(freeMode){leaveFree();return}const seg=segmentAt(window.scrollY);moveScroll(seg.stop?timeline.find(t=>t.stop===seg.stop&&t.phase==='out').end+20:window.scrollY+600);}
+function advance(){if(touchJourney&&entered&&!freeMode){touchAdvance(1);return}if(freeMode){leaveFree();return}const seg=segmentAt(window.scrollY);moveScroll(seg.stop?timeline.find(t=>t.stop===seg.stop&&t.phase==='out').end+20:window.scrollY+600);}
 function enterFree(){if(!entered||freeMode)return;savedScroll=window.scrollY;freeMode=true;cameraTween=null;closeScene();document.body.classList.add('free-view');$('freeMode').textContent='继续展卷';$('freeMode').setAttribute('aria-pressed','true');$('hint').textContent=stage.clientWidth<=750?'单指拖动 · 双指缩放 · 缩至全景后松手继续展卷':'左键按住拖动 · 滚轮缩放 · 缩至全景后继续展卷';$('status').textContent='行程已暂停 · 继续展卷将回到原位置';render();}
 function leaveFree(animate=true){if(!freeMode)return;zoomMotion=null;const before={scale,ox,oy,time:performance.now()};freeMode=false;pointers.clear();pinch=null;pinchReachedWide=false;document.body.classList.remove('free-view');$('freeMode').textContent='自由细看';$('freeMode').setAttribute('aria-pressed','false');$('hint').textContent='向下滚动，从右向左阅卷 · 到景点自动放大';window.scrollTo({top:savedScroll,behavior:'instant'});cameraTween=animate?before:null;scrollDirty=true;applyTimeline();}
 // Resume from the area being inspected, skipping a stop already zoomed back out.
@@ -182,6 +185,49 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('scroll',()=>{if(!freeMode){zoomMotion=null;scene=null;boatOverride=null;$('sceneAction').disabled=false;scrollDirty=true}},{passive:true});
 stage.addEventListener('wheel',e=>{if(!freeMode)return;e.preventDefault();const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?stage.clientHeight:1);if(delta>0&&scale<=base()+.0001&&(zoomMotion?.to.scale??scale)<=base()+.0001){resumeFromWide(Math.min(delta,240));return}const r=stage.getBoundingClientRect();zoom(Math.exp(-delta*.001),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+// Touch travel owns its gesture: no native inertia can skip a scenic pause.
+function touchCameraTo(y){
+ const before={scale,ox,oy,time:performance.now(),duration:800};
+ cameraTween=null;window.scrollTo({top:clamp(y,0,totalScroll),behavior:'instant'});
+ cameraTween=reduce?null:before;scrollDirty=true;applyTimeline();
+}
+function touchAdvance(direction){
+ const seg=segmentAt(window.scrollY);
+ if(seg.stop){
+  const edge=timeline.find(t=>t.stop===seg.stop&&t.phase===(direction>0?'out':'in'));
+  touchCameraTo(direction>0?edge.end+1:edge.start-1);
+ }else touchTravel(direction*stage.clientHeight*.65);
+}
+function touchTravel(delta){
+ let destination=clamp(window.scrollY+delta,0,totalScroll);
+ const direction=Math.sign(delta);
+ const crossed=direction>0
+  ?timeline.find(t=>t.phase==='in'&&t.start>=window.scrollY&&t.start<=destination)
+  :[...timeline].reverse().find(t=>t.phase==='out'&&t.end<=window.scrollY&&t.end>=destination);
+ if(crossed){
+  if(pure){destination=direction>0?timeline.find(t=>t.stop===crossed.stop&&t.phase==='out').end+1:timeline.find(t=>t.stop===crossed.stop&&t.phase==='in').start-1;}
+  else{const hold=timeline.find(t=>t.stop===crossed.stop&&t.phase==='hold');touchCameraTo(hold.start+hold.length/2);return true;}
+ }
+ cameraTween=null;window.scrollTo({top:clamp(destination,0,totalScroll),behavior:'instant'});scrollDirty=true;applyTimeline();return false;
+}
+stage.addEventListener('touchstart',e=>{
+ if(!entered||freeMode||document.querySelector('dialog[open]')||e.target.closest('button,a,input')||e.touches.length!==1){journeyTouch=null;return;}
+ const p=e.touches[0];journeyTouch={x:p.clientX,y:p.clientY,lastY:p.clientY,axis:null,consumed:!!cameraTween};
+},{passive:true});
+stage.addEventListener('touchmove',e=>{
+ if(!journeyTouch||freeMode)return;
+ if(e.touches.length!==1){journeyTouch=null;return;}
+ e.preventDefault();const g=journeyTouch,p=e.touches[0],dx=p.clientX-g.x,dy=g.y-p.clientY;
+ if(g.consumed)return;
+ if(!g.axis){if(Math.hypot(dx,dy)<12)return;g.axis=Math.abs(dy)>=Math.abs(dx)?'y':'x';}
+ if(g.axis==='x'){$('hint').textContent='上下滑动展卷 · 点击画面可自由细看';return;}
+ if(segmentAt(window.scrollY).stop){if(Math.abs(dy)<24)return;g.consumed=true;touchAdvance(Math.sign(dy));return;}
+ const delta=g.lastY-p.clientY;g.lastY=p.clientY;
+ g.consumed=touchTravel(delta);
+},{passive:false});
+for(const type of ['touchend','touchcancel'])stage.addEventListener(type,()=>{journeyTouch=null;},{passive:true});
+window.addEventListener('qianli-enter',()=>{if(touchJourney)$('hint').textContent='上下滑动展卷 · 点击画面可自由细看';});
+
 stage.addEventListener('dragstart',e=>e.preventDefault());
 function pinchState(){
  if(pointers.size!==2)return null;
@@ -222,7 +268,7 @@ function resizeJourney(){
  const fraction=clamp(((freeMode?savedScroll:window.scrollY)-anchor.start)/anchor.length,0,1);
  const point={x:(viewport.width/2-ox)/scale,y:(viewport.height/2-oy)/scale};
  const magnification=scale/(Math.max(1,viewport.height)/H);
- zoomMotion=null;cameraTween=null;pointers.clear();pinch=null;pinchReachedWide=false;
+ journeyTouch=null;zoomMotion=null;cameraTween=null;pointers.clear();pinch=null;pinchReachedWide=false;
  viewport={width,height};buildTimeline();
  const destination=timeline[index].start+timeline[index].length*fraction;
  if(freeMode){savedScroll=destination;scale=base()*magnification;ox=width/2-point.x*scale;oy=height/2-point.y*scale;bound();render()}

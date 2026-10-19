@@ -85,3 +85,6 @@ html{scrollbar-gutter:stable}body{overflow-x:hidden}body.before-entry,body.free-
  #card{max-height:calc(100dvh - 210px);overflow:auto}
  .zoom{flex-direction:row;bottom:8px}.free-view #hint{max-width:calc(100% - 160px)}
 }
+
+/* Touch travel is handled explicitly; cards keep their own native scrolling. */
+@media(any-pointer:coarse){#stage{touch-action:none}.free-view #freeMode{position:relative;z-index:8;border-color:#dec58d}}
