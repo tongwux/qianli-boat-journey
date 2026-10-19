@@ -88,3 +88,12 @@ html{scrollbar-gutter:stable}body{overflow-x:hidden}body.before-entry,body.free-
 
 /* Touch travel is handled explicitly; cards keep their own native scrolling. */
 @media(any-pointer:coarse){#stage{touch-action:none}.free-view #freeMode{position:relative;z-index:8;border-color:#dec58d}}
+
+/* Rounded controls, shared by both languages and all viewport sizes. */
+button,#marks button span{border-radius:999px}
+#prev,#next,#closeCard,.zoom button{border-radius:50%}
+.zoom{border-radius:999px;padding:4px;gap:4px}
+.zoom button{background:#243b32;border:1px solid #dfcfa526}
+#paintingMenu button:last-child{border-top:0}
+#discoveries button{border-bottom:0}
+#discoveries button:hover,#discoveries button:focus-visible{background:#c4af7918}
