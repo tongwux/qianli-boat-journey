@@ -20,7 +20,7 @@ stops.push(...views);
 const passages=[
  [[37900,760],[37200,735],[36500,750],[35900,770],[35400,900],[34700,1030],[34000,1230],[33400,1410],[32800,1450],[32100,1470],[31300,1510],[30500,1530],[29700,1530],[29200,1490],[28700,1500],[28200,1515]],
  [[27800,1525],[27300,1510],[26800,1500]],
- [[25600,1450],[25000,1430],[24500,1490],[24000,1525],[23400,1520],[22800,1460],[22000,1450],[21400,1410],[20900,1350],[20500,1400]],
+ [[25600,1450],[25000,1430],[24500,1490],[24000,1525],[23400,1520],[22800,1460],[22250,1530],[22000,1575],[21400,1575],[20900,1575],[20500,1575]],
  [[19500,1040],[19000,1050],[18600,1020]],
  [[18000,1515],[17600,1480],[17100,1520]],
  [[15010,1500],[14880,1530]],
@@ -37,8 +37,9 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clamp=(v,a,b
 function base(){return Math.max(1,stage.clientHeight)/H}
 function bound(){ox=clamp(ox,Math.min(0,stage.clientWidth-W*scale),0);oy=clamp(oy,Math.min(0,stage.clientHeight*(activeStop&&stage.clientWidth<=750?.45:1)-H*scale),Math.max(0,stage.clientHeight-H*scale)/2)}
 function center(){ox=stage.clientWidth*.52-pos*W*scale;oy=(stage.clientHeight-H*scale)/2;bound()}
+// Keep the hull level: image-space route slopes are not physical boat pitch.
 function route(x){
- for(const p of passages){if(x<=p[0][0]&&x>=p.at(-1)[0]){for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i];if(x>=b[0]){const u=(a[0]-x)/(a[0]-b[0]),e=smooth(u),y=a[1]+(b[1]-a[1])*e;const edge=Math.min(p[0][0]-x,x-p.at(-1)[0]);return {x,y,opacity:clamp(edge/95,0,1),angle:clamp(Math.atan2((b[1]-a[1])*6*u*(1-u),a[0]-b[0])*180/Math.PI,-9,9),depth:clamp(.65+y/3200,.85,1.12)}}}}}
+ for(const p of passages){if(x<=p[0][0]&&x>=p.at(-1)[0]){for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i];if(x>=b[0]){const u=(a[0]-x)/(a[0]-b[0]),e=smooth(u),y=a[1]+(b[1]-a[1])*e;const edge=Math.min(p[0][0]-x,x-p.at(-1)[0]);return {x,y,opacity:clamp(edge/95,0,1),angle:0,depth:clamp(.65+y/3200,.85,1.12)}}}}}
  return {x,y:1480,opacity:0,angle:0,depth:1};
 }
 function render(){
@@ -77,13 +78,13 @@ function showAnnotation(s){
 }
 function openStop(s){if(freeMode)leaveFree(false);$('discoveries').hidden=true;$('discoverToggle').setAttribute('aria-expanded','false');const seg=timeline.find(t=>t.stop===s&&t.phase==='hold');moveScroll(seg.start+seg.length*.3);}
 function ring(x,y){$('focusRing').style.left=x+'px';$('focusRing').style.top=y+'px';$('focusRing').hidden=false}
-function animateBoat(points,duration,onDone){scene={points,duration:reduce?.01:duration,elapsed:0,onDone};boatOverride={x:points[0][0],y:points[0][1],depth:1,opacity:1};$('sceneAction').disabled=true;render()}
+function animateBoat(points,duration,onDone,depth=1){scene={points,duration:reduce?.01:duration,elapsed:0,onDone,depth};boatOverride={x:points[0][0],y:points[0][1],depth,opacity:1};$('sceneAction').disabled=true;render()}
 function detailImage(name,alt){const window=$('detailWindow');window.hidden=false;window.classList.remove('revealed');window.replaceChildren();const im=new Image();im.src=`assets/detail-${name}.jpg`;im.alt=alt;window.appendChild(im);return window}
 $('sceneAction').onclick=async()=>{const s=activeStop;if(!s)return;markFound(s);
  if(s.kind==='view'){enterFree();focusAt(s.x*W,s.y*H,2.3);}
  if(s.id==='bridge'){focusAt(28780,1300,2);$('actionState').textContent='收橹缓行，舟过桥影。';animateBoat([[28810,1490],[28795,1410],[28780,1340],[28765,1250],[28750,1160]],10,()=>{$('actionState').textContent='已过长桥 · 回望两岸';});}
  if(s.id==='dock'){focusAt(29120,1430,2);$('actionState').textContent='渐渐收橹，靠向柳岸。';animateBoat([[29100,1520],[29170,1470],[29210,1428]],7,()=>{$('actionState').textContent='已靠泊 · 在此歇一歇';ring(29210,1428)});}
- if(s.id==='ferry'){focusAt(20700,1320,1.8);$('actionState').textContent='水面很静，慢慢渡向岸边。';animateBoat([[21100,1400],[20850,1370],[20630,1345]],9,()=>{$('actionState').textContent='已到渡口 · 山中人家就在岸上';ring(20630,1345)});}
+ if(s.id==='ferry'){focusAt(20700,stage.clientWidth<=750?1480:1320,1.8);$('actionState').textContent='水面很静，慢慢渡向岸边。';const start=boatOverride||route(pos*W);animateBoat([[start.x,start.y],[20640,1555],[20580,1550]],6,()=>{$('actionState').textContent='已到渡口 · 山中人家就在岸上';ring(20580,1550)},start.depth);}
  if(s.id==='fishing'){const w=detailImage('fishing','原画江面上的渔舟与人物');const b=document.createElement('button');b.className='find-fisher';b.textContent='找到舟中人';b.setAttribute('aria-label','圈出舟中人物');b.onclick=()=>{w.classList.add('revealed');const outline=document.createElement('span');outline.className='fisher-ring';outline.setAttribute('aria-hidden','true');w.appendChild(outline);$('actionState').textContent='找到了 · 寥寥几笔，舟中人物便有了姿态。';b.disabled=true};w.appendChild(b);$('actionState').textContent='看一看船身中间的细小墨线。';$('sceneAction').textContent='再看渔舟';}
  if(s.id==='mill'){const w=detailImage('mill','原画山溪水磨，屋下可见立式水轮');const diagram=document.createElement('div');diagram.className='mill-diagram';diagram.innerHTML='<svg viewBox="0 0 250 64" role="img" aria-label="流水推动立式水轮，传动带动磨盘的简化示意"><path d="M2 49q16-8 30 0t30 0" fill="none" stroke="#9baf98"/><g class="wheel" stroke="#c2ae80" fill="none"><circle cx="91" cy="32" r="25"/><path d="M66 32h50M91 7v50M73 14l36 36M73 50l36-36"/></g><path d="M116 32h45v-12h27" fill="none" stroke="#a89570"/><ellipse cx="205" cy="23" rx="27" ry="9" fill="none" stroke="#c2ae80"/><path d="M178 23v9q27 17 54 0v-9" fill="none" stroke="#c2ae80"/></svg><small>流水 → 水轮 → 传动 → 磨盘 · 简化示意</small>';w.appendChild(diagram);$('actionState').textContent='原画保持静止，示意图展示借水为力。';$('sceneAction').textContent='再看水磨';}
  if(s.id==='fall'){if(fallTimer){clearTimeout(fallTimer);fallTimer=null;updateAudio();$('sceneAction').textContent='再听流水';$('actionState').textContent='水声渐歇。';return}detailImage('fall','原画山间瀑布与溪流');$('sceneAction').textContent='停止听瀑';$('actionState').textContent='听瀑 · 一段轻柔的流水声';try{fallTimer=setTimeout(()=>{fallTimer=null;updateAudio();if(activeStop?.id==='fall'){$('sceneAction').textContent='再听流水';$('actionState').textContent='水声渐歇 · 山色依旧'}},20000);await enableAudio()}catch{clearTimeout(fallTimer);fallTimer=null;$('actionState').textContent='声音暂未开启，请再试一次。';$('sceneAction').textContent='重新听瀑'}}
@@ -92,7 +93,7 @@ const ordered=[...stops].sort((a,b)=>b.x-a.x);
 function buildTimeline(){
  timeline=[];let cursor=0,previous=.944;
  const add=(phase,length,from,to,stop)=>{timeline.push({phase,length,start:cursor,end:cursor+length,from,to,stop});cursor+=length};
- for(const s of ordered){const wide={x:s.x,y:.5,z:1,focus:0},detail={x:s.x,y:s.y,z:s.kind==='view'?1.85:2.2,focus:1};
+ for(const s of ordered){const wide={x:s.x,y:.5,z:1,focus:0},detail={x:s.x,y:s.id==='ferry'&&stage.clientWidth<=750?.94:s.y,z:s.kind==='view'?1.85:2.2,focus:1};
  add('travel',Math.max(420,(previous-s.x)*W*base()*.95),{x:previous,y:.5,z:1,focus:0},wide,null);
  add('in',720,wide,detail,s);add('hold',650,detail,detail,s);add('out',560,detail,wide,s);previous=s.x;
  }
@@ -281,7 +282,7 @@ if(typeof ResizeObserver!=='undefined')new ResizeObserver(resizeJourney).observe
 function frame(t){let dt=Math.min((t-last)/1000,.05);last=t;
  if(scrollDirty||cameraTween){scrollDirty=false;applyTimeline()}
  if(zoomMotion){const m=zoomMotion,u=clamp((t-m.start)/m.duration,0,1),e=1-Math.pow(1-u,3);scale=m.from.scale+(m.to.scale-m.from.scale)*e;ox=m.from.ox+(m.to.ox-m.from.ox)*e;oy=m.from.oy+(m.to.oy-m.from.oy)*e;if(u===1)zoomMotion=null;render()}
- if(scene&&!document.hidden){scene.elapsed+=dt;const u=clamp(scene.elapsed/scene.duration,0,1),q=smooth(u)*(scene.points.length-1),i=Math.min(Math.floor(q),scene.points.length-2),f=q-i,a=scene.points[i],b=scene.points[i+1];boatOverride={x:a[0]+(b[0]-a[0])*f,y:a[1]+(b[1]-a[1])*f,depth:1-u*.12,opacity:1};if(u===1){const done=scene.onDone;scene=null;$('sceneAction').disabled=false;done?.()}render()}
+ if(scene&&!document.hidden){scene.elapsed+=dt;const u=clamp(scene.elapsed/scene.duration,0,1),q=smooth(u)*(scene.points.length-1),i=Math.min(Math.floor(q),scene.points.length-2),f=q-i,a=scene.points[i],b=scene.points[i+1];boatOverride={x:a[0]+(b[0]-a[0])*f,y:a[1]+(b[1]-a[1])*f,depth:scene.depth*(1-u*.12),opacity:1};if(u===1){const done=scene.onDone;scene=null;$('sceneAction').disabled=false;done?.()}render()}
  requestAnimationFrame(frame)
 }
 history.scrollRestoration='manual';document.body.classList.add('before-entry');buildTimeline();window.scrollTo(0,0);applyTimeline();requestAnimationFrame(frame);
