@@ -97,3 +97,23 @@ button,#marks button span{border-radius:999px}
 #paintingMenu button:last-child{border-top:0}
 #discoveries button{border-bottom:0}
 #discoveries button:hover,#discoveries button:focus-visible{background:#c4af7918}
+
+/* Let label geometry follow its text, rather than overflowing a 44 px marker. */
+#marks button{display:flex;align-items:center;justify-content:center;width:max-content;max-width:160px;height:auto;min-width:44px;min-height:44px;padding:0;opacity:.12}
+#marks button span{width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5;text-align:center;padding:8px 14px;background:#26392c40;border-color:#d9c9a14d;text-shadow:0 1px 3px #132624b3}
+#marks button.near{opacity:.8}
+#marks button:hover,#marks button:focus-visible{opacity:1}
+#marks button:hover span,#marks button:focus-visible span{background:#26392c80}
+.transport button,.card-actions button,#paintingMenu button,#discoveries button,#poemMark,#enter,#imageRetry{white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.5}
+.transport button,.card-actions button{min-width:0;max-width:100%;height:auto}
+.card-actions button{flex:0 1 auto;min-height:44px;padding:10px 16px;text-align:center}
+#paintingMenu button{padding:10px 14px}
+#poemMark{width:max-content;max-width:180px;text-align:center}
+@media(max-width:650px){
+ .transport{column-gap:4px;row-gap:2px}
+ #play,#freeMode{flex-basis:calc(50% - 50px);padding:8px 10px}
+ .transport button{white-space:normal;min-height:44px}
+ #prev,#next{flex:0 0 44px;padding:0}
+ #sound,.transport>.poem-open,#pure{flex:1 1 28%;padding:6px 8px}
+ #marks button{max-width:145px}
+}
